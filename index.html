@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1220">
+<title>Crypto 20 Watch — Price Tracker & Alerts</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Crypto 20 Watch">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<style>
+:root{--bg:#080e19;--panel:#101a2a;--panel2:#142238;--line:#26364d;--text:#edf4ff;--muted:#91a3bb;--green:#35d49a;--red:#ff6b78;--blue:#68a8ff;--gold:#f6c96a}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 15% 0%,#132b48 0,transparent 38%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+.wrap{max-width:1220px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#1f8fff,#55e0b0);display:grid;place-items:center;color:#07111d;font-size:23px;font-weight:900;box-shadow:0 8px 24px #1f8fff35}
+h1{font-size:22px;margin:0;letter-spacing:.2px}
+.sub{color:var(--muted);font-size:12px;margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:#17263b;color:var(--text);padding:10px 13px;border-radius:11px;cursor:pointer}
+.btn:hover{border-color:var(--blue);background:#1b304b}
+.btn.primary{background:linear-gradient(135deg,#1879dd,#16a77c);border:0;color:white;font-weight:700}
+.btn:disabled{opacity:.5;cursor:wait}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+.stat{background:linear-gradient(145deg,#122139,#0f1929);border:1px solid var(--line);border-radius:15px;padding:15px}
+.stat .label{color:var(--muted);font-size:12px}
+.stat .value{font-size:21px;font-weight:750;margin-top:4px}
+.stat .hint{font-size:11px;color:var(--muted);margin-top:3px}
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 12px;flex-wrap:wrap}
+.search{flex:1;min-width:210px;max-width:390px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 13px;color:var(--text);outline:none}
+.search:focus,input:focus,select:focus{border-color:var(--blue)}
+.filters{display:flex;gap:7px;flex-wrap:wrap}
+.filter{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.filter.active{background:#1a3553;color:#fff;border-color:#347dc0}
+.sort{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:9px 11px;border-radius:10px}
+.status{color:var(--muted);font-size:12px;margin:7px 2px 12px}
+.table-wrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0d1726}
+table{width:100%;border-collapse:collapse}
+thead{background:#142238;color:#aebed2;font-size:12px;text-align:left}
+th,td{padding:13px 12px;border-bottom:1px solid #1c2b40;white-space:nowrap}
+tbody tr:hover{background:#13233a}
+tbody tr:last-child td{border-bottom:0}
+.coin{display:flex;align-items:center;gap:10px}
+.coin-icon{width:34px;height:34px;border-radius:50%;background:#1c2d45;display:grid;place-items:center;font-size:11px;font-weight:800;color:#c9dcf4}
+.coin-name{font-weight:700}
+.symbol{font-size:11px;color:var(--muted)}
+.price{font-weight:750;font-variant-numeric:tabular-nums}
+.pos{color:var(--green);font-weight:700}
+.neg{color:var(--red);font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:11px;color:var(--muted)}
+.alert-btn{border:1px solid #31547a;background:#142b45;color:#cce4ff;border-radius:9px;padding:7px 10px;cursor:pointer}
+.alert-btn.set{border-color:#27795e;background:#12372e;color:#8ff0c8}
+.mobile-list{display:none}
+.card{background:#0e1a2b;border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:10px}
+.cardtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.cardgrid .k{font-size:10px;color:var(--muted)}
+.cardgrid .v{font-size:13px;font-weight:700;margin-top:2px;overflow-wrap:anywhere}
+.alert-strip{margin:12px 0;padding:11px 13px;border:1px solid #7b5a26;background:#302616;border-radius:11px;color:#ffe2a2;display:none}
+.alert-strip.show{display:block}
+.footer{color:var(--muted);font-size:11px;line-height:1.6;margin:17px 2px}
+.footer a{color:#91c4ff}
+.empty{padding:35px;text-align:center;color:var(--muted)}
+.modal-backdrop{position:fixed;inset:0;background:#02060dcc;display:none;align-items:center;justify-content:center;padding:16px;z-index:5}
+.modal-backdrop.open{display:flex}
+.modal{width:min(430px,100%);background:#111e31;border:1px solid #344862;border-radius:17px;padding:19px;box-shadow:0 25px 80px #0009}
+.modal h2{font-size:19px;margin:0 0 4px}
+.modal p{font-size:12px;color:var(--muted);margin:0 0 16px}
+.field{display:block;margin:12px 0}
+.field span{display:block;font-size:12px;color:#b8c7d9;margin-bottom:6px}
+.field input,.field select{width:100%;background:#091321;border:1px solid var(--line);border-radius:10px;padding:11px;color:var(--text);outline:none}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:17px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173a31;border:1px solid #2d8a6c;color:#d7fff0;border-radius:12px;padding:11px 16px;box-shadow:0 10px 35px #0008;display:none;z-index:8;max-width:90vw}
+.toast.show{display:block}
+@media(max-width:800px){.wrap{padding:14px}.stats{grid-template-columns:repeat(2,1fr)}.table-wrap{display:none}.mobile-list{display:block}header{align-items:flex-start}.actions .btn{padding:9px 10px;font-size:12px}}
+@media(max-width:430px){h1{font-size:18px}.logo{width:40px;height:40px}.stats{gap:8px}.stat{padding:12px}.stat .value{font-size:18px}.cardgrid{gap:5px}.cardgrid .v{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">
+    <div class="logo">₿</div>
+    <div><h1>Crypto 20 Watch</h1><div class="sub">২০টি কয়েন · Price Tracker & Alert Dashboard</div></div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="installAppBtn" hidden>⬇ Install App</button>
+    <button class="btn" id="notifyBtn">🔔 নোটিফিকেশন চালু</button>
+    <button class="btn primary" id="refreshBtn">↻ Refresh</button>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="label">পর্যবেক্ষণে কয়েন</div><div class="value" id="totalCoins">২০</div><div class="hint">নির্বাচিত watchlist</div></div>
+  <div class="stat"><div class="label">আজকের Top Gainer</div><div class="value" id="topGainer">—</div><div class="hint" id="topGainerHint">ডেটা লোড হচ্ছে</div></div>
+  <div class="stat"><div class="label">আজকের Top Loser</div><div class="value" id="topLoser">—</div><div class="hint" id="topLoserHint">ডেটা লোড হচ্ছে</div></div>
+  <div class="stat"><div class="label">সক্রিয় Price Alert</div><div class="value" id="activeAlerts">০</div><div class="hint">এই ব্রাউজারে সংরক্ষিত</div></div>
+</div>
+
+<div class="alert-strip" id="alertStrip"></div>
+<div class="toolbar">
+  <input class="search" id="search" placeholder="কয়েনের নাম বা Symbol খুঁজুন..." autocomplete="off">
+  <div class="filters">
+    <button class="filter active" data-filter="all">সব</button>
+    <button class="filter" data-filter="gainers">বাড়ছে</button>
+    <button class="filter" data-filter="losers">কমছে</button>
+    <button class="filter" data-filter="alerts">Alert আছে</button>
+  </div>
+  <select class="sort" id="sort">
+    <option value="rank">Rank অনুযায়ী</option>
+    <option value="change">২৪ ঘণ্টার পরিবর্তন</option>
+    <option value="price">দাম (বেশি থেকে কম)</option>
+    <option value="cap">Market Cap</option>
+  </select>
+</div>
+<div class="status" id="status">দামের তথ্য আনা হচ্ছে…</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>কয়েন</th><th>দাম (USD)</th><th>২৪ ঘণ্টা</th><th>Market Cap</th><th>Volume 24h</th><th>Price Alert</th></tr></thead>
+<tbody id="tableBody"><tr><td colspan="7" class="empty">লোড হচ্ছে…</td></tr></tbody>
+</table>
+</div>
+<div class="mobile-list" id="mobileList"><div class="empty">লোড হচ্ছে…</div></div>
+
+<div class="footer">
+  <b>ডেটা উৎস:</b> <a href="https://coinpaprika.com/" target="_blank" rel="noopener">CoinPaprika</a> — Powered by CoinPaprika.
+  <br>দাম USD-তে দেখানো হয়। Free API-র ডেটা তাৎক্ষণিক নাও হতে পারে; প্রতিটি কয়েনের source update time দেখুন।
+  <br>Alert এই ব্রাউজারে সংরক্ষিত থাকে। এই পেজ খোলা থাকলে নির্ধারিত বিরতিতে দাম পরীক্ষা হবে। পেজ বন্ধ থাকলে বা ইন্টারনেট না থাকলে সতর্কবার্তা নাও আসতে পারে।
+  <br>এটি শুধু তথ্য পর্যবেক্ষণের টুল—কেনাবেচা করে না এবং বিনিয়োগের পরামর্শ নয়। ক্রিপ্টো সম্পদে বড় ধরনের ঝুঁকি রয়েছে।
+</div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h2 id="modalTitle">Price Alert সেট করুন</h2>
+    <p id="modalCoin">কয়েন</p>
+    <label class="field"><span>কোন অবস্থায় সতর্ক করবে?</span>
+      <select id="alertDirection"><option value="below">দাম এই লেভেলে বা এর নিচে গেলে</option><option value="above">দাম এই লেভেলে বা এর উপরে গেলে</option></select>
+    </label>
+    <label class="field"><span>Target Price (USD)</span><input id="alertTarget" type="number" min="0" step="any" placeholder="যেমন: 0.00001"></label>
+    <div class="small" id="currentPriceText"></div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelModal">বাতিল</button>
+      <button class="btn primary" id="saveAlert">Alert সংরক্ষণ</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const COINS = [
+ {symbol:"BTC",name:"Bitcoin",id:"btc-bitcoin"},
+ {symbol:"ETH",name:"Ethereum",id:"eth-ethereum"},
+ {symbol:"BNB",name:"BNB",id:"bnb-binance-coin"},
+ {symbol:"SOL",name:"Solana",id:"sol-solana"},
+ {symbol:"XRP",name:"XRP",id:"xrp-xrp"},
+ {symbol:"ADA",name:"Cardano",id:"ada-cardano"},
+ {symbol:"DOGE",name:"Dogecoin",id:"doge-dogecoin"},
+ {symbol:"TRX",name:"TRON",id:"trx-tron"},
+ {symbol:"LINK",name:"Chainlink",id:"link-chainlink"},
+ {symbol:"AVAX",name:"Avalanche",id:"avax-avalanche"},
+ {symbol:"DOT",name:"Polkadot",id:"dot-polkadot"},
+ {symbol:"LTC",name:"Litecoin",id:"ltc-litecoin"},
+ {symbol:"TON",name:"Toncoin",id:"ton-toncoin"},
+ {symbol:"SUI",name:"Sui",id:"sui-sui"},
+ {symbol:"HBAR",name:"Hedera",id:"hbar-hedera-hashgraph"},
+ {symbol:"SHIB",name:"Shiba Inu",id:"shib-shiba-inu"},
+ {symbol:"PEPE",name:"Pepe",id:"pepe-pepe"},
+ {symbol:"BONK",name:"Bonk",id:"bonk-bonk"},
+ {symbol:"FLOKI",name:"FLOKI",id:"floki-floki"},
+ {symbol:"CORE",name:"Core DAO",id:"core-core-dao"}
+];
+const API = "https://api.coinpaprika.com/v1/tickers?quotes=USD";
+const REFRESH_MS = 10 * 60 * 1000;
+let market = COINS.map(c => ({id:c.id,name:c.name,symbol:c.symbol,rank:null,price:null,change:null,cap:null,volume:null,updated:""}));
+let activeFilter = "all";
+let selectedCoin = null;
+let alerts = readStore("crypto20_alerts", {});
+let lastPrices = {};
+let firstLoad = true;
+
+function readStore(key, fallback){try{return JSON.parse(localStorage.getItem(key)) ?? fallback}catch(e){return fallback}}
+function saveStore(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(e){}}
+function money(n){
+ if(n===null||n===undefined||n===""||!Number.isFinite(Number(n))) return "—";
+ n=Number(n);
+ if(Math.abs(n)>=1000) return "$"+n.toLocaleString("en-US",{maximumFractionDigits:2});
+ if(Math.abs(n)>=1) return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:4});
+ return "$"+n.toLocaleString("en-US",{maximumSignificantDigits:6});
+}
+function compact(n){
+ if(n===null||n===undefined||n===""||!Number.isFinite(Number(n))) return "—";
+ n=Number(n);
+ if(n>=1e12)return "$"+(n/1e12).toFixed(2)+"T";
+ if(n>=1e9)return "$"+(n/1e9).toFixed(2)+"B";
+ if(n>=1e6)return "$"+(n/1e6).toFixed(2)+"M";
+ if(n>=1e3)return "$"+(n/1e3).toFixed(2)+"K";
+ return "$"+n.toFixed(0);
+}
+function pct(n){if(n===null||n===undefined||n===""||!Number.isFinite(Number(n)))return "—";return (n>0?"+":"")+Number(n).toFixed(2)+"%"}
+function showToast(message){const el=document.getElementById("toast");el.textContent=message;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),4200)}
+function updateAlertCount(){document.getElementById("activeAlerts").textContent=Object.keys(alerts).length.toLocaleString("bn-BD")}
+function notifyUser(title,body){
+ const strip=document.getElementById("alertStrip");strip.textContent=title+" — "+body;strip.classList.add("show");
+ showToast(title+" — "+body);
+ if("Notification" in window && Notification.permission==="granted"){
+   try{new Notification(title,{body})}catch(e){}
+ }
+}
+function checkAlerts(){
+ let changed=false;
+ for(const coin of market){
+   if(!Number.isFinite(coin.price)) continue;
+   const a=alerts[coin.id]; if(!a)continue;
+   const hit=a.direction==="above"?coin.price>=a.target:coin.price<=a.target;
+   if(hit && !a.triggered){
+     a.triggered=true;changed=true;
+     notifyUser("🔔 "+coin.name+" ("+coin.symbol+")", "দাম "+money(coin.price)+" — আপনার নির্ধারিত "+(a.direction==="above"?"উপরে":"নিচে")+"র লেভেল "+money(a.target)+" স্পর্শ করেছে।");
+   } else if(!hit && a.triggered){a.triggered=false;changed=true}
+ }
+ if(changed)saveStore("crypto20_alerts",alerts);
+ updateAlertCount();
+}
+function render(){
+ const query=document.getElementById("search").value.trim().toLowerCase();
+ let rows=market.filter(c=>{
+   const matches=(c.name+" "+c.symbol).toLowerCase().includes(query);
+   const filter=activeFilter==="all" || (activeFilter==="gainers"&&c.change>0) || (activeFilter==="losers"&&c.change<0) || (activeFilter==="alerts"&&!!alerts[c.id]);
+   return matches&&filter;
+ });
+ const sort=document.getElementById("sort").value;
+ rows.sort((a,b)=>sort==="change"?b.change-a.change:sort==="price"?b.price-a.price:sort==="cap"?b.cap-a.cap:a.rank-b.rank);
+ const tbody=document.getElementById("tableBody"), mobile=document.getElementById("mobileList");
+ if(!rows.length){tbody.innerHTML='<tr><td colspan="7" class="empty">কোনো কয়েন পাওয়া যায়নি।</td></tr>';mobile.innerHTML='<div class="empty">কোনো কয়েন পাওয়া যায়নি।</div>';return}
+ tbody.innerHTML=rows.map((c,i)=>{
+   const a=alerts[c.id],changeClass=c.change>=0?"pos":"neg";
+   return `<tr>
+    <td class="muted">${i+1}</td>
+    <td><div class="coin"><div class="coin-icon">${c.symbol.slice(0,3)}</div><div><div class="coin-name">${c.name}</div><div class="symbol">${c.symbol} · Rank ${c.rank||"—"}</div></div></div></td>
+    <td class="price">${money(c.price)}</td><td class="${changeClass}">${pct(c.change)}</td>
+    <td>${compact(c.cap)}</td><td>${compact(c.volume)}</td>
+    <td>${a?`<button class="alert-btn set" data-alert="${c.id}">🔔 ${a.direction==="above"?"উপরে":"নিচে"} ${money(a.target)}</button>`:`<button class="alert-btn" data-set="${c.id}">＋ Alert</button>`}</td>
+   </tr>`;
+ }).join("");
+ mobile.innerHTML=rows.map(c=>{
+   const a=alerts[c.id],changeClass=c.change>=0?"pos":"neg";
+   return `<div class="card">
+    <div class="cardtop"><div class="coin"><div class="coin-icon">${c.symbol.slice(0,3)}</div><div><div class="coin-name">${c.name}</div><div class="symbol">${c.symbol} · Rank ${c.rank||"—"}</div></div></div><div style="text-align:right"><div class="price">${money(c.price)}</div><div class="${changeClass}">${pct(c.change)}</div></div></div>
+    <div class="cardgrid"><div><div class="k">Market Cap</div><div class="v">${compact(c.cap)}</div></div><div><div class="k">Volume 24h</div><div class="v">${compact(c.volume)}</div></div><div><div class="k">২৪ ঘণ্টা</div><div class="v ${changeClass}">${pct(c.change)}</div></div></div>
+    <div style="margin-top:11px">${a?`<button class="alert-btn set" data-alert="${c.id}">🔔 ${a.direction==="above"?"উপরে":"নিচে"} ${money(a.target)} · Alert সরাতে চাপুন</button>`:`<button class="alert-btn" data-set="${c.id}">＋ Price Alert সেট করুন</button>`}</div>
+   </div>`;
+ }).join("");
+ document.querySelectorAll("[data-set]").forEach(b=>b.addEventListener("click",()=>openModal(b.dataset.set)));
+ document.querySelectorAll("[data-alert]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.alert;if(confirm("এই কয়েনের Price Alert মুছে ফেলবেন?")){delete alerts[id];saveStore("crypto20_alerts",alerts);updateAlertCount();render()}}));
+ updateAlertCount();
+}
+async function loadMarket(){
+ const btn=document.getElementById("refreshBtn");btn.disabled=true;
+ document.getElementById("status").textContent="CoinPaprika থেকে সর্বশেষ উপলভ্য ডেটা আনা হচ্ছে…";
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),18000);
+ try{
+   const response=await fetch(API,{cache:"no-store",signal:controller.signal});
+   if(!response.ok)throw new Error("API response "+response.status);
+   const all=await response.json();
+   const byId=new Map(all.map(x=>[x.id,x]));
+   const missing=[];
+   market=COINS.map(c=>{
+     const x=byId.get(c.id) || all.find(v=>String(v.symbol).toUpperCase()===c.symbol);
+     if(!x){
+       missing.push(c.symbol);
+       return {id:c.id,name:c.name,symbol:c.symbol,rank:null,price:null,change:null,cap:null,volume:null,updated:""};
+     }
+     const q=x.quotes?.USD||{};
+     const price=Number(q.price);
+     return {
+       id:c.id,name:c.name,symbol:c.symbol,rank:Number(x.rank)||null,
+       price:Number.isFinite(price)?price:null,
+       change:q.percent_change_24h==null?null:Number(q.percent_change_24h),
+       cap:q.market_cap==null?null:Number(q.market_cap),
+       volume:q.volume_24h==null?null:Number(q.volume_24h),
+       updated:x.last_updated||""
+     };
+   });
+   const live=market.filter(c=>Number.isFinite(c.price));
+   const changes=live.filter(c=>Number.isFinite(c.change));
+   if(changes.length){
+     const gain=[...changes].sort((a,b)=>b.change-a.change)[0],loss=[...changes].sort((a,b)=>a.change-b.change)[0];
+     document.getElementById("topGainer").textContent=gain.symbol+" "+pct(gain.change);
+     document.getElementById("topGainerHint").textContent=gain.name;
+     document.getElementById("topLoser").textContent=loss.symbol+" "+pct(loss.change);
+     document.getElementById("topLoserHint").textContent=loss.name;
+   } else {
+     document.getElementById("topGainer").textContent="—";
+     document.getElementById("topGainerHint").textContent="দামের ডেটা পাওয়া যায়নি";
+     document.getElementById("topLoser").textContent="—";
+     document.getElementById("topLoserHint").textContent="দামের ডেটা পাওয়া যায়নি";
+   }
+   const times=live.map(c=>c.updated).filter(Boolean).sort();
+   const newest=times.length?new Date(times[times.length-1]).toLocaleString("bn-BD"):"সময় পাওয়া যায়নি";
+   document.getElementById("status").textContent=`কয়েনের তালিকা: ${COINS.length}/২০ · লাইভ ডেটা: ${live.length}/২০ · সর্বশেষ আপডেট: ${newest}`;
+   if(missing.length)document.getElementById("status").textContent+=` · ডেটা নেই: ${missing.join(", ")}`;
+   if(live.length===0)document.getElementById("status").textContent+=" · নামের তালিকা দেখা যাচ্ছে, কিন্তু API থেকে দাম পাওয়া যায়নি।";
+   checkAlerts();render();
+ }catch(err){
+   document.getElementById("status").textContent="২০টি কয়েনের নাম দেখানো হচ্ছে, কিন্তু দাম লোড হয়নি: "+(err.name==="AbortError"?"অনুরোধের সময় শেষ হয়েছে":err.message)+" · ইন্টারনেট পরীক্ষা করে Refresh দিন।";
+   showToast("দামের ডেটা পাওয়া যায়নি। পরে আবার চেষ্টা করুন।");
+ }finally{clearTimeout(timeout);btn.disabled=false}
+}
+function openModal(id){
+ selectedCoin=COINS.find(c=>c.id===id);
+ if(!selectedCoin)return;
+ const c=market.find(x=>x.id===id),existing=alerts[id];
+ document.getElementById("modalCoin").textContent=selectedCoin.name+" ("+selectedCoin.symbol+")";
+ document.getElementById("currentPriceText").textContent="বর্তমান প্রদর্শিত দাম: "+(c?money(c.price):"—");
+ document.getElementById("alertDirection").value=existing?.direction||"below";
+ document.getElementById("alertTarget").value=existing?.target||"";
+ document.getElementById("modalBackdrop").classList.add("open");
+ document.getElementById("alertTarget").focus();
+}
+function closeModal(){document.getElementById("modalBackdrop").classList.remove("open");selectedCoin=null}
+document.getElementById("saveAlert").addEventListener("click",()=>{
+ if(!selectedCoin)return;
+ const target=Number(document.getElementById("alertTarget").value);
+ if(!Number.isFinite(target)||target<=0){showToast("সঠিক Target Price লিখুন।");return}
+ const direction=document.getElementById("alertDirection").value;
+ alerts[selectedCoin.id]={target,direction,triggered:false};
+ saveStore("crypto20_alerts",alerts);closeModal();render();showToast("Price Alert সংরক্ষণ হয়েছে।");
+});
+document.getElementById("cancelModal").addEventListener("click",closeModal);
+document.getElementById("modalBackdrop").addEventListener("click",e=>{if(e.target.id==="modalBackdrop")closeModal()});
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("sort").addEventListener("change",render);
+document.querySelectorAll(".filter").forEach(b=>b.addEventListener("click",()=>{
+ activeFilter=b.dataset.filter;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===b));render();
+}));
+document.getElementById("refreshBtn").addEventListener("click",loadMarket);
+document.getElementById("notifyBtn").addEventListener("click",async()=>{
+ if(!("Notification" in window)){showToast("এই ব্রাউজারে Notification সমর্থিত নয়। পেজের ভেতরের Alert দেখা যাবে।");return}
+ try{const p=await Notification.requestPermission();showToast(p==="granted"?"ব্রাউজার নোটিফিকেশন চালু হয়েছে।":"নোটিফিকেশন অনুমতি দেওয়া হয়নি।")}
+ catch(e){showToast("নোটিফিকেশন চালু করা যায়নি।")}
+});
+document.getElementById("status").textContent="২০টি কয়েনের তালিকা প্রস্তুত। এখন দামের তথ্য আনা হচ্ছে…";
+render();
+loadMarket();
+setInterval(loadMarket,REFRESH_MS);
+</script>
+
+<script>
+/* PWA install support: works after this site is hosted on HTTPS. */
+(function () {
+  const installButton = document.getElementById("installAppBtn");
+  let deferredInstallPrompt = null;
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    if (installButton) installButton.hidden = false;
+  });
+
+  if (installButton) {
+    installButton.addEventListener("click", async () => {
+      if (!deferredInstallPrompt) {
+        alert("Chrome-এর মেনু থেকে 'Install app' অথবা 'Add to Home screen' নির্বাচন করুন।");
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installButton.hidden = true;
+    });
+  }
+
+  window.addEventListener("appinstalled", () => {
+    if (installButton) installButton.hidden = true;
+  });
+
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch((error) => {
+        console.warn("Service worker registration failed:", error);
+      });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
